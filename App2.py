@@ -143,7 +143,7 @@ st.markdown("---")
 st.markdown("## SIREN à traiter")
 
 sirens_text = st.text_area(
-    "Tu peux coller ici des SIREN en plus (1 par ligne, ou séparés par espaces/virgules).",
+    "SIREN à rechercher (1 par ligne, ou séparés par espaces/virgules).",
     placeholder="481 986 446\n552100554\n...",
     height=140,
 )
@@ -231,5 +231,6 @@ if btn_run:
         st.exception(e)
     except Exception as e:
         st.exception(e)
+
 
 
