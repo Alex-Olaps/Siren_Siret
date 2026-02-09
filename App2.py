@@ -84,7 +84,7 @@ def load_df_from_upload(uploaded_file) -> pd.DataFrame:
 # Streamlit App
 # ----------------------------
 st.set_page_config(page_title="SIREN → SIRET (INSEE)", layout="wide")
-st.title("INSEE SIREN → liste complète de SIRET)")
+st.title("INSEE SIREN → liste complète de SIRET")
 
 INSEE_API_KEY = st.secrets.get("INSEE_API_KEY", "")
 
@@ -231,4 +231,5 @@ if btn_run:
         st.exception(e)
     except Exception as e:
         st.exception(e)
+
 
