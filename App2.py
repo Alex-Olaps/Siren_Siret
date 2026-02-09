@@ -45,11 +45,7 @@ div.stButton > button { border-radius: 12px; padding: .6rem 1rem; }
 )
 
 st.markdown('<p class="app-title">INSEE Sirene — SIREN → SIRET</p>', unsafe_allow_html=True)
-# st.markdown(
-#     '<p class="app-subtitle">Import CSV/Excel • Batch (1 ou plusieurs SIREN) • Export XLSX avec résumé</p>',
-#     unsafe_allow_html=True,
-# )
-# st.markdown('<span class="badge">Interne</span>', unsafe_allow_html=True)
+
 st.write("")
 
 
@@ -141,8 +137,7 @@ INSEE_API_KEY = st.secrets.get("INSEE_API_KEY", "")
 left, right = st.columns([1.45, 1], gap="large")
 
 with left:
-    # st.markdown('<div class="card">', unsafe_allow_html=True)
-    # st.subheader("📥 Import & saisie")
+
     with st.container(border=True):
         st.subheader("📥 Import & saisie")
     
@@ -190,8 +185,6 @@ with left:
         st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
-    # st.markdown('<div class="card">', unsafe_allow_html=True)
-    # st.subheader("⚙️ Paramètres")
 
     with st.container(border=True):
         st.subheader("⚙️ Paramètres")
@@ -230,8 +223,9 @@ if btn_run:
         st.warning("Arrêt demandé. Clique sur 'Reset' puis relance.")
         st.stop()
 
-    status = st.status("Lancement...", expanded=False)
+    status_text = st.empty()
     overall = st.progress(0)
+    status_text.write("Prêt")
 
     all_rows = []
     total = len(sirens_list)
@@ -241,7 +235,7 @@ if btn_run:
             if st.session_state.stop:
                 raise RuntimeError("STOP_REQUESTED")
 
-            status.update(label=f"Traitement SIREN {i}/{total} : {s}", state="running")
+            status_text.info(f"SIREN {i}/{total} : {s}")
             rows, _ = get_sirets_from_siren(
                 siren=s,
                 api_key=INSEE_API_KEY,
@@ -264,17 +258,17 @@ if btn_run:
             df = df.sort_values(["SIREN", "SIRET"])
 
         st.session_state.df_result = df
-        status.update(label="Terminé ✅", state="complete")
+        status_text.success("Terminé ✅")
         overall.progress(1.0)
 
     except RuntimeError as e:
         if str(e) == "STOP_REQUESTED":
-            status.update(label="Arrêt demandé : traitement interrompu.", state="error")
+            status_text.info(label="Arrêt demandé : traitement interrompu.", state="error")
             st.stop()
-        status.update(label="Erreur", state="error")
+        status_text.info(label="Erreur", state="error")
         st.exception(e)
     except Exception as e:
-        status.update(label="Erreur", state="error")
+        status_text.info(label="Erreur", state="error")
         st.exception(e)
 
 
