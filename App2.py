@@ -290,7 +290,7 @@ if btn_run:
         status_text.error("Erreur pendant le traitement.")
         st.exception(e)
     except Exception as e:
-        status_text.info(label="Erreur", state="error")
+        status_text.error("Erreur pendant le traitement.")
         st.exception(e)
 
 
