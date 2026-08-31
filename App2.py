@@ -228,6 +228,8 @@ if btn_run:
     status_text.write("Prêt")
 
     all_rows = []
+    errors = []
+    not_found = []
     total = len(sirens_list)
 
     try:
@@ -236,18 +238,38 @@ if btn_run:
                 raise RuntimeError("STOP_REQUESTED")
 
             status_text.info(f"SIREN {i}/{total} : {s}")
-            rows, _ = get_sirets_from_siren(
-                siren=s,
-                api_key=INSEE_API_KEY,
-                only_active=only_active,
-                page_size=int(page_size),
-                should_stop=lambda: st.session_state.stop,
-            )
-
-            all_rows.extend(rows)
-            overall.progress(i / total)
+            try:
+                rows, _ = get_sirets_from_siren(
+                    siren=s,
+                    api_key=INSEE_API_KEY,
+                    only_active=only_active,
+                    page_size=int(page_size),
+                    should_stop=lambda: st.session_state.stop,
+                )
+                if rows:
+                    all_rows.extend(rows)
+                else:
+                    not_found.append(s)
+            except RuntimeError as e:
+                if str(e) == "STOP_REQUESTED":
+                    raise
+                errors.append({"SIREN": s, "Erreur": str(e)})
+            except Exception as e:
+                errors.append({"SIREN": s, "Erreur": str(e)})
+            finally:
+                overall.progress(i / total)
 
         df = pd.DataFrame(all_rows)
+
+        if errors:
+            st.warning(f"{len(errors)} SIREN n'ont pas pu être traités.")
+            st.dataframe(pd.DataFrame(errors), use_container_width=True)
+
+        if not_found:
+            st.info(
+                f"Aucun établissement trouvé pour {len(not_found)} SIREN : "
+                + ", ".join(not_found)
+            )
 
         # Dédoublonnage global par SIRET
         if "SIRET" in df.columns:
@@ -263,9 +285,9 @@ if btn_run:
 
     except RuntimeError as e:
         if str(e) == "STOP_REQUESTED":
-            status_text.info(label="Arrêt demandé : traitement interrompu.", state="error")
+            status_text.warning("Arrêt demandé : traitement interrompu.")
             st.stop()
-        status_text.info(label="Erreur", state="error")
+        status_text.error("Erreur pendant le traitement.")
         st.exception(e)
     except Exception as e:
         status_text.info(label="Erreur", state="error")
