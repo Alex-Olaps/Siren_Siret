@@ -46,6 +46,19 @@ def _normalize_siren(raw: str) -> str:
     return siren
 
 
+def _is_valid_siren(siren: str) -> bool:
+    """Vérifie la clé de contrôle d'un SIREN avec l'algorithme de Luhn."""
+    total = 0
+    for index, digit in enumerate(siren):
+        value = int(digit)
+        if index % 2 == 1:
+            value *= 2
+            if value > 9:
+                value -= 9
+        total += value
+    return total % 10 == 0
+
+
 def _latest_period(periodes: list) -> dict:
     """Prend la période la plus pertinente : dateFin vide (courante) sinon dateDebut max."""
     if not periodes:
@@ -164,6 +177,8 @@ def get_sirets_from_siren(
 ) -> Tuple[List[dict], List[dict]]:
     
     siren = _normalize_siren(siren)
+    if not _is_valid_siren(siren):
+        raise ValueError(f"SIREN invalide : {siren} (clé de contrôle incorrecte).")
 
     if as_of_date is None:
         as_of_date = date.today().isoformat()  # "YYYY-MM-DD"
@@ -221,6 +236,9 @@ def get_sirets_from_siren(
 
         if r.status_code == 400:
             raise RuntimeError(f"400. URL={r.url}\nRéponse={r.text[:400]}")
+
+        if r.status_code == 404:
+            return [], []
 
         r.raise_for_status()
         data = r.json()
